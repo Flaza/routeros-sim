@@ -16,8 +16,9 @@ jobs:
           docker run --rm \
             -v "$PWD":/home/user/hostcwd \
             -v "$HOME/.buildozer":/home/user/.buildozer \
+            -w /home/user/hostcwd \
             ghcr.io/kivy/buildozer:latest \
-            buildozer android debug
+            bash -c "pip3 install --user buildozer && ~/.local/bin/buildozer android debug"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
