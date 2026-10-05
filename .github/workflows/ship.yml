@@ -11,17 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
-        with:
-          path: ~/.buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-
       - name: Build APK with Buildozer
         uses: addnab/docker-run-action@v3
         with:
           image: kivy/buildozer:latest
-          options: -v ${{ github.workspace }}:/home/user/hostcwd -v ~/.buildozer:/home/user/.buildozer
+          options: -v ${{ github.workspace }}:/home/user/hostcwd
           run: |
             cd /home/user/hostcwd
             buildozer android debug
