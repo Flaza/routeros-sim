@@ -67,3 +67,6 @@ log_level = 2
 # Собирать ли APK в debug-режиме (True) или release (False)
 # Для отладки оставьте True
 warn_on_root = 1
+
+# Автоматически принимать лицензии Android SDK
+android.accept_sdk_license = True
