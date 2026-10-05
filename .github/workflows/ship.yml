@@ -100,7 +100,7 @@ jobs:
         with:
           command: buildozer -v android debug
           workdir: .
-          buildozer_version: stable
+          buildozer_version: 1.4.0
 
       - name: Show APK outputs
         if: always()
