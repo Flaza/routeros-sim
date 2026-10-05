@@ -15,10 +15,9 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: kivy/buildozer:latest
-          options: -v ${{ github.workspace }}:/home/user/hostcwd
+          options: -v ${{ github.workspace }}:/home/user/hostcwd -w /home/user/hostcwd
           run: |
-            cd /home/user/hostcwd
-            buildozer android debug
+            yes | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
