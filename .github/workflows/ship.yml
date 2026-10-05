@@ -11,14 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build APK with Buildozer (via Docker)
-        run: |
-          docker run --rm \
-            -v "$PWD":/home/user/hostcwd \
-            -v "$HOME/.buildozer":/home/user/.buildozer \
-            -w /home/user/hostcwd \
-            ghcr.io/kivy/buildozer:latest \
-            bash -c "pip3 install --user buildozer && ~/.local/bin/buildozer android debug"
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+
+      - name: Build APK with Buildozer
+        uses: addnab/docker-run-action@v3
+        with:
+          image: kivy/buildozer:latest
+          options: -v ${{ github.workspace }}:/home/user/hostcwd -v ~/.buildozer:/home/user/.buildozer
+          run: |
+            cd /home/user/hostcwd
+            buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
