@@ -22,7 +22,7 @@ source.exclude_dirs = bin,.buildozer,tests,__pycache__
 version = 0.1
 
 # Требования: kivy — обязателен, остальное подтягивается автоматически
-requirements = python3==3.12.9,hostpython3==3.12.9,kivy
+requirements = python3==3.10.13,hostpython3==3.10.13,kivy
 
 # Ориентация экрана
 orientation = portrait
