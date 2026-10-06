@@ -9,15 +9,14 @@ jobs:
   build-apk:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Оставляем твой родной Python 3.10
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # Твои оригинальные зависимости (мы только добавили openjdk-17 для совместимости с Gradle)
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -27,14 +26,12 @@ jobs:
             libncurses5-dev libncursesw5-dev libtinfo6 cmake \
             libffi-dev libssl-dev
 
-      # ВАЖНЫЙ ШАГ: Ставим самую свежую версию Buildozer напрямую из исходников Kivy
       - name: Install Buildozer from Master
         run: |
           pip install --upgrade pip
           pip install "cython<3.0.0" virtualenv
           pip install git+https://github.com
 
-      # Твоя оригинальная команда сборки
       - name: Build APK
         run: |
           buildozer -v android debug
