@@ -31,30 +31,34 @@ jobs:
             libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev \
             gettext build-essential libstdc++6
 
-      - name: Install Python-for-Android
+      - name: Configure Global Pip (Kill Isolation)
+        run: |
+          # Создаем глобальный конфиг pip для пользователя runner.
+          # Любое изолированное виртуальное окружение (даже внутри python -m build)
+          # обязано подчиняться этому файлу и брать пакеты из глобальной системы.
+          mkdir -p ~/.config/pip
+          echo -e "[global]\nno-build-isolation = false\nno-isolation = true" > ~/.config/pip/pip.conf
+          
+          # Также дублируем для root, на случай если p4a вызовет сборку через sudo
+          sudo mkdir -p /root/.config/pip
+          sudo cp ~/.config/pip/pip.conf /root/.config/pip/pip.conf
+
+      - name: Install Python-for-Android and Tools
         run: |
           pip install --upgrade pip
-          # Устанавливаем Cython глобально в окружение runner-а
-          pip install "cython<3.0.0" virtualenv build python-for-android
+          pip install "cython<3.0.0" virtualenv build setuptools wheel python-for-android
 
       - name: Build APK via P4A
         run: |
-          # Указываем путь к рабочему системному sdkmanager
           export ANDROID_SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           
-          # Отключаем изоляцию сборки пакетов, чтобы компилятор hostpython 
-          # увидел установленный нами ранее Cython
-          export PIP_NO_BUILD_ISOLATION=0
-          export PIP_NO_ISOLATION=0
-          
-          # Запуск нативной сборки под доступный в системе API 34
           p4a apk \
             --private . \
             --package=org.example.routerossim \
             --name="RouterOS Simulator" \
             --version=0.1 \
             --bootstrap=sdl2 \
-            --requirements=python3==3.10.13,hostpython3==3.10.13,kivy \
+            --requirements=python3==3.10.13,hostpython3==3.10.13,kivy,cython \
             --arch=arm64-v8a \
             --permission=INTERNET \
             --sdk-dir=$ANDROID_HOME \
