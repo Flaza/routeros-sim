@@ -34,15 +34,20 @@ jobs:
       - name: Install Python-for-Android
         run: |
           pip install --upgrade pip
-          pip install "cython<3.0.0" virtualenv
-          pip install python-for-android
+          # Устанавливаем Cython глобально в окружение runner-а
+          pip install "cython<3.0.0" virtualenv build python-for-android
 
       - name: Build APK via P4A
         run: |
           # Указываем путь к рабочему системному sdkmanager
           export ANDROID_SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           
-          # Запуск сборки под доступный в системе API 34
+          # Отключаем изоляцию сборки пакетов, чтобы компилятор hostpython 
+          # увидел установленный нами ранее Cython
+          export PIP_NO_BUILD_ISOLATION=0
+          export PIP_NO_ISOLATION=0
+          
+          # Запуск нативной сборки под доступный в системе API 34
           p4a apk \
             --private . \
             --package=org.example.routerossim \
