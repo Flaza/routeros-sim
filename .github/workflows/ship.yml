@@ -39,10 +39,10 @@ jobs:
 
       - name: Build APK via P4A
         run: |
-          # Перенаправляем p4a на встроенный в GitHub Actions рабочий sdkmanager
+          # Указываем путь к рабочему системному sdkmanager
           export ANDROID_SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           
-          # Запуск сборки без скачивания утилит
+          # Запуск сборки под доступный в системе API 34
           p4a apk \
             --private . \
             --package=org.example.routerossim \
@@ -54,7 +54,7 @@ jobs:
             --permission=INTERNET \
             --sdk-dir=$ANDROID_HOME \
             --ndk-dir=$ANDROID_NDK_LATEST_HOME \
-            --android-api=33
+            --android-api=34
             
       - name: Upload APK
         uses: actions/upload-artifact@v4
