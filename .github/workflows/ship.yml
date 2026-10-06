@@ -12,47 +12,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Настраиваем Java 17 (официальный экшен)
-      - name: Set up JDK 17
+      # ВАЖНО: Ставим Java 11. Она полностью совместима со старым sdkmanager,
+      # который Buildozer разворачивает для API 33 под капотом.
+      - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
 
-      # 2. Настраиваем Python 3.10 (официальный экшен)
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # 3. Ставим только базовые системные зависимости для сборки C-кода Python
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip libncurses5-dev libncursesw5-dev libtinfo6 \
-            cmake libffi-dev libssl-dev autoconf libtool pkg-config zlib1g-dev gettext
+            git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev \
+            gettext build-essential libstdc++6
 
-      # 4. Ставим стабильные версии Buildozer и Cython
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
           pip install "buildozer>=1.5.0" "cython<3.0.0" virtualenv
 
-      # 5. Собираем APK, перенаправив Buildozer на встроенный Android SDK от GitHub
       - name: Build APK
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: |
-          # Перезаписываем пути в buildozer.spec, чтобы он читал системный SDK вместо скачивания своего
-          sed -i "s|# android.sdk_path =|android.sdk_path = $ANDROID_HOME|" buildozer.spec
-          sed -i "s|# android.ndk_path =|android.ndk_path = $ANDROID_NDK_HOME|" buildozer.spec
-          
-          # Запускаем сборку
+          # Чистый запуск. Теперь sdkmanager отработает штатно, скачает build-tools и сам найдет aidl.
           buildozer -v android debug
 
-      # 6. Загружаем готовый файл
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
