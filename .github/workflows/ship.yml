@@ -1,4 +1,4 @@
-name: Shipit Cloud Build (Fixed Buildozer)
+name: Shipit Cloud Build (Pure P4A)
 
 on:
   push:
@@ -29,33 +29,48 @@ jobs:
           sudo apt-get install -y \
             git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev \
             libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev \
-            gettext build-essential libstdc++6 aidl
+            gettext build-essential libstdc++6
 
-      - name: Install Buildozer and Cython
+      - name: Install Python-for-Android
         run: |
           pip install --upgrade pip
-          pip install "buildozer>=1.5.0" "cython<3.0.0" virtualenv build wheel setuptools
+          pip install "cython<3.0.0" virtualenv build setuptools wheel python-for-android
 
-      - name: Prepare Android SDK Paths to Avoid Download Bugs
+      - name: Build APK via P4A
         run: |
-          # Прямо прописываем Бульдозеру использовать системный SDK, где AIDL уже установлен и лицензирован
-          sed -i "s|# android.sdk_path =|android.sdk_path = $ANDROID_HOME|" buildozer.spec
-          sed -i "s|# android.ndk_path =|android.ndk_path = $ANDROID_NDK_HOME|" buildozer.spec
-          sed -i "s|android.auto_update_sdk = True|android.auto_update_sdk = False|" buildozer.spec || true
-
-      - name: Build APK
-        env:
-          # Включаем железное отключение изоляции для ВСЕХ вложенных процессов pip и build
-          PIP_NO_BUILD_ISOLATION: "1"
-          PIP_NO_ISOLATION: "1"
-          P4A_NO_BUILD_ISOLATION: "1"
-        run: |
-          # Запуск через чистый buildozer
-          buildozer -v android debug
-
+          # 1. Запускаем p4a на одну секунду, просто чтобы он успел скомпилировать hostpython3 и упасть
+          p4a apk --requirements=python3,hostpython3 --arch=arm64-v8a --sdk-dir=$ANDROID_HOME --ndk-dir=$ANDROID_NDK_HOME --android-api=34 || true
+          
+          # 2. ЖЕСТКИЙ ХАК: Принудительно копируем Cython из системного Python раннера 
+          # прямо внутрь site-packages свежесобранного локального hostpython3.
+          # Теперь, когда он запустит изоляцию, Cython БУДЕТ внутри его ядра.
+          LOCAL_SITE_PACKAGES="/home/runner/.local/share/python-for-android/build/other_builds/hostpython3/desktop/hostpython3/native-build/root/usr/local/lib/python3.10/site-packages"
+          if [ -d "$LOCAL_SITE_PACKAGES" ]; then
+            echo "Injecting Cython into local hostpython3..."
+            cp -r /opt/hostedtoolcache/Python/3.10.*/x64/lib/python3.10/site-packages/Cython* "$LOCAL_SITE_PACKAGES/" || true
+            cp -r /opt/hostedtoolcache/Python/3.10.*/x64/lib/python3.10/site-packages/cython* "$LOCAL_SITE_PACKAGES/" || true
+          fi
+          
+          # 3. Указываем путь к рабочему системному sdkmanager
+          export ANDROID_SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          
+          # 4. Запускаем финальную сборку. Теперь падения на "No module named Cython" физически быть не может.
+          p4a apk \
+            --private . \
+            --package=org.example.routerossim \
+            --name="RouterOS Simulator" \
+            --version=0.1 \
+            --bootstrap=sdl2 \
+            --requirements=python3==3.10.13,hostpython3==3.10.13,kivy,cython \
+            --arch=arm64-v8a \
+            --permission=INTERNET \
+            --sdk-dir=$ANDROID_HOME \
+            --ndk-dir=$ANDROID_NDK_HOME \
+            --android-api=34
+            
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: routeros-sim-apk
-          path: bin/*.apk
+          path: "*.apk"
           if-no-files-found: error
