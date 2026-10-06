@@ -12,12 +12,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Чистый запуск через официальный Docker-контейнер Buildozer
-      - name: Build APK with Buildozer Action
-        uses: ArtemisB/buildozer-action@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
         with:
-          command: buildozer android debug
-          repository_root: .
+          python-version: '3.10'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev \
+            gettext build-essential libstdc++6 aidl
+
+      - name: Install Android SDK Command-line Tools
+        run: |
+          # Устанавливаем официальный менеджер SDK прямо в систему Ubuntu
+          sudo apt-get install -y android-sdk-platform-tools-common google-android-cmdline-tools-11.0-installer || true
+
+      - name: Install Buildozer and Cython
+        run: |
+          pip install --upgrade pip
+          pip install "buildozer>=1.5.0" "cython<3.0.0" virtualenv
+
+      - name: Build APK
+        env:
+          # Помогаем Бульдозеру сразу увидеть системные пути
+          ANDROID_HOME: /usr/lib/android-sdk
+        run: |
+          # Запуск сборки с подробным выводом логов
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
