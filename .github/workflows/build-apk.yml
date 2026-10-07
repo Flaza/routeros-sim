@@ -23,23 +23,17 @@ jobs:
       - name: Install Flet
         run: pip install flet --pre -U
 
-      - name: Force jni version override
+      - name: Warmup Flet (install Flutter SDK)
         run: |
-          mkdir -p ~/.pub-cache/override
-          cd ~/.pub-cache/override
-          cat > pubspec.yaml << 'EOF'
-          name: jni_override
-          environment:
-            sdk: '>=3.0.0 <4.0.0'
-          dependencies:
-            jni: ^1.1.0
-          EOF
-          flutter pub get
+          flet build apk --arch arm64-v8a --yes -v || true
+
+      - name: Patch jni version in pub cache
+        run: |
+          find ~/.pub-cache -type d -name "jni-1.0.*" -exec rm -rf {} + || true
+          find ~/.pub-cache -type d -name "jni_flutter-*" -exec rm -rf {} + || true
 
       - name: Build APK (arm64-v8a)
-        run: |
-          flet build apk --arch arm64-v8a --yes -v \
-            --flutter-build-args=--pub-cache-dir=$HOME/.pub-cache/override
+        run: flet build apk --arch arm64-v8a --yes -v
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
