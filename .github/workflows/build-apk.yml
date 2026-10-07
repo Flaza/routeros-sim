@@ -21,16 +21,12 @@ jobs:
       - name: Install Flet
         run: pip install flet --pre -U
 
-      - name: Warmup (generate Flutter project)
+      - name: Warmup (generate Flutter project + extract it)
         run: |
           flet build apk --arch arm64-v8a --yes -v || true
-
-      - name: Locate generated pubspec.yaml
-        run: |
-          echo "=== Поиск pubspec.yaml ==="
-          find $HOME -name "pubspec.yaml" -not -path "*/.pub-cache/*" 2>/dev/null
-          find $GITHUB_WORKSPACE -name "pubspec.yaml" 2>/dev/null
-          echo "=== Конец поиска ==="
+          echo "=== Looking for flutter build dir ==="
+          find /tmp -maxdepth 1 -type d -name "flet_flutter_build*" 2>/dev/null
+          find $GITHUB_WORKSPACE/build -maxdepth 2 -type d 2>/dev/null | head -20
 
       - name: Build APK (arm64-v8a)
         run: flet build apk --arch arm64-v8a --yes -v
