@@ -9,6 +9,7 @@ dependencies = ["flet"]
 org = "com.flaza"
 product = "RouterOS Sim"
 company = "Flaza"
+template = "custom_template"
 
 [tool.flet.app]
 path = "src"
