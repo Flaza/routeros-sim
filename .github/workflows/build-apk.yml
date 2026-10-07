@@ -25,16 +25,12 @@ jobs:
         run: |
           flet build apk --arch arm64-v8a --yes -v || true
 
-      - name: Patch generated project's jni version
+      - name: Locate generated pubspec.yaml
         run: |
-          PUBSPEC=$(find /tmp -name "pubspec.yaml" -path "*flet_flutter_build*" | head -n 1)
-          if [ -z "$PUBSPEC" ]; then
-            echo "pubspec.yaml not found"
-            exit 1
-          fi
-          echo "Patching: $PUBSPEC"
-          sed -i 's|  jni: 1.0.0|  jni: ^1.1.0|' "$PUBSPEC"
-          grep -n "jni" "$PUBSPEC"
+          echo "=== Поиск pubspec.yaml ==="
+          find $HOME -name "pubspec.yaml" -not -path "*/.pub-cache/*" 2>/dev/null
+          find $GITHUB_WORKSPACE -name "pubspec.yaml" 2>/dev/null
+          echo "=== Конец поиска ==="
 
       - name: Build APK (arm64-v8a)
         run: flet build apk --arch arm64-v8a --yes -v
