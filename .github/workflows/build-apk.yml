@@ -23,15 +23,6 @@ jobs:
       - name: Install Flet
         run: pip install flet --pre -U
 
-      - name: Warmup Flet (install Flutter SDK)
-        run: |
-          flet build apk --arch arm64-v8a --yes -v || true
-
-      - name: Patch jni version in pub cache
-        run: |
-          find ~/.pub-cache -type d -name "jni-1.0.*" -exec rm -rf {} + || true
-          find ~/.pub-cache -type d -name "jni_flutter-*" -exec rm -rf {} + || true
-
       - name: Build APK (arm64-v8a)
         run: flet build apk --arch arm64-v8a --yes -v
 

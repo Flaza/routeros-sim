@@ -15,3 +15,6 @@ path = "src"
 
 [tool.flet.android]
 bundle_id = "com.flaza.routerossim"
+
+[tool.flet.flutter.dependencies]
+jni = "^1.1.0"
