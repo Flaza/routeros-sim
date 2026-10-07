@@ -2,7 +2,7 @@ name: Build Flet APK
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -23,8 +23,23 @@ jobs:
       - name: Install Flet
         run: pip install flet --pre -U
 
+      - name: Force jni version override
+        run: |
+          mkdir -p ~/.pub-cache/override
+          cd ~/.pub-cache/override
+          cat > pubspec.yaml << 'EOF'
+          name: jni_override
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+          dependencies:
+            jni: ^1.1.0
+          EOF
+          flutter pub get
+
       - name: Build APK (arm64-v8a)
-        run: flet build apk --arch arm64-v8a --yes -v
+        run: |
+          flet build apk --arch arm64-v8a --yes -v \
+            --flutter-build-args=--pub-cache-dir=$HOME/.pub-cache/override
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
