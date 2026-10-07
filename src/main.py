@@ -49,8 +49,11 @@ def main(page: ft.Page):
             return
         f = e.files[0]
         try:
-            with open(f.path, "r", encoding="utf-8", errors="ignore") as fp:
-                content = fp.read()
+            if f.bytes is not None:
+                content = f.bytes.decode("utf-8", errors="ignore")
+            else:
+                with open(f.path, "r", encoding="utf-8", errors="ignore") as fp:
+                    content = fp.read()
             config_input.value = content
             config_status.value = f"Загружен: {f.name} ({len(content)} байт)"
             config_status.color = ft.Colors.GREEN_300
@@ -68,6 +71,7 @@ def main(page: ft.Page):
             dialog_title="Выберите .rsc файл",
             allowed_extensions=["rsc", "txt", "conf"],
             allow_multiple=False,
+            with_data=True,
         )
 
     def clear_config(e):
