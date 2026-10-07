@@ -19,7 +19,7 @@ jobs:
           java-version: '17'
 
       - name: Install Flet
-        run: pip install flet
+        run: pip install "flet[all]==0.28.3"
 
       - name: Build APK
         run: flet build apk --arch arm64-v8a --yes
