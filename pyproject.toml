@@ -1,17 +1,9 @@
 [project]
 name = "routeros-sim"
 version = "0.0.2"
-description = "RouterOS Packet Flow Simulator"
-requires-python = ">=3.12"
-dependencies = ["flet==0.28.3"]
-
-[tool.flet]
-org = "com.flaza"
-product = "RouterOS Sim"
-company = "Flaza"
-
-[tool.flet.app]
-path = "src"
+dependencies = [
+    "flet==0.28.3"
+]
 
 [tool.flet.android]
-bundle_id = "com.flaza.routerossim"
+permissions = ["storage"]
