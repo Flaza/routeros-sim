@@ -47,8 +47,6 @@ def main(page: ft.Page):
     config_input = ft.TextField(
         label="Конфигурация MikroTik",
         multiline=True,
-        min_lines=12,
-        max_lines=20,
         text_style=ft.TextStyle(font_family="monospace", size=11),
         expand=True,
     )
