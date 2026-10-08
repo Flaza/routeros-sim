@@ -35,5 +35,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: routeros-sim-${{ github.ref_name }}-${{ env.APP_VERSION }}
-          path: build/apk/*.apk
+          path: src/build/apk/*.apk
           if-no-files-found: error
