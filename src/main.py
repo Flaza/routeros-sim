@@ -1,6 +1,5 @@
 """Flet-интерфейс для симулятора RouterOS Packet Flow (кнопочная навигация)."""
 import flet as ft
-import flet_permission_handler as fph
 
 from routeros_core import (
     RouterOSParser,
@@ -26,22 +25,6 @@ def main(page: ft.Page):
         "overrides": {},
         "current_tab": TAB_CONFIG,
     }
-
-    # --- Permission handler ---
-    ph = fph.PermissionHandler()
-    page.overlay.append(ph)
-
-    def request_storage(e):
-        try:
-            status = ph.request_permission(
-                fph.PermissionType.MANAGE_EXTERNAL_STORAGE
-            )
-            config_status.value = f"Разрешение на файлы: {status}"
-            config_status.color = ft.Colors.GREEN_300
-        except Exception as ex:
-            config_status.value = f"Ошибка запроса разрешения: {ex}"
-            config_status.color = ft.Colors.RED_300
-        page.update()
 
     # --- КОНФИГ ---
     config_input = ft.TextField(
@@ -136,7 +119,6 @@ def main(page: ft.Page):
         [
             ft.Row(
                 [
-                    ft.ElevatedButton("🔐 Разрешение", on_click=request_storage),
                     ft.ElevatedButton("📂 Загрузить .rsc", on_click=pick_file),
                     ft.OutlinedButton("🗑 Очистить", on_click=clear_config),
                     ft.ElevatedButton("🔍 Разобрать", on_click=lambda e: parse_config()),
