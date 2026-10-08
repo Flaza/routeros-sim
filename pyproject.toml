@@ -5,5 +5,8 @@ dependencies = [
     "flet==0.28.3"
 ]
 
+[tool.flet.app]
+path = "src"
+
 [tool.flet.android]
-permissions = ["storage"]
+permissions = ["manage_external_storage"]
