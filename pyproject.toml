@@ -2,8 +2,8 @@
 name = "routeros-sim"
 version = "1.0.0"
 description = "RouterOS Packet Flow Simulator"
-requires-python = ">=3.10"
-dependencies = ["flet==0.81.0"]
+requires-python = ">=3.12,<3.13"
+dependencies = ["flet==0.27.6", "flet-permission-handler"]
 
 [tool.flet]
 org = "com.flaza"
@@ -15,4 +15,6 @@ path = "src"
 
 [tool.flet.android]
 bundle_id = "com.flaza.routerossim"
-extract_packages = ["flet", "serious_python"]
+
+[tool.flet.android.permission]
+"android.permission.MANAGE_EXTERNAL_STORAGE" = true

@@ -1,6 +1,6 @@
 """Flet-интерфейс для симулятора RouterOS Packet Flow (кнопочная навигация)."""
 import flet as ft
-import copy
+import flet_permission_handler as fph
 
 from routeros_core import (
     RouterOSParser,
@@ -8,7 +8,6 @@ from routeros_core import (
     resolve_target,
 )
 
-# --- индексы "вкладок" ---
 TAB_CONFIG = 0
 TAB_PARAMS = 1
 TAB_RULES = 2
@@ -19,7 +18,7 @@ def main(page: ft.Page):
     page.title = "RouterOS Sim"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0
-    page.scroll = None  # отключаем общий скролл, чтобы не ломать layout
+    page.scroll = None
 
     state = {
         "parser": None,
@@ -28,9 +27,23 @@ def main(page: ft.Page):
         "current_tab": TAB_CONFIG,
     }
 
-    # ============ КОНТЕНТ ВКЛАДОК ============
+    # --- Permission handler ---
+    ph = fph.PermissionHandler()
+    page.overlay.append(ph)
 
-    # ----- КОНФИГ -----
+    def request_storage(e):
+        try:
+            status = ph.request_permission(
+                fph.PermissionType.MANAGE_EXTERNAL_STORAGE
+            )
+            config_status.value = f"Разрешение на файлы: {status}"
+            config_status.color = ft.Colors.GREEN_300
+        except Exception as ex:
+            config_status.value = f"Ошибка запроса разрешения: {ex}"
+            config_status.color = ft.Colors.RED_300
+        page.update()
+
+    # --- КОНФИГ ---
     config_input = ft.TextField(
         label="Конфигурация MikroTik",
         multiline=True,
@@ -46,20 +59,27 @@ def main(page: ft.Page):
 
     def on_file_picked(e: ft.FilePickerResultEvent):
         if not e.files:
+            config_status.value = "Диалог закрыт без выбора файла"
+            config_status.color = ft.Colors.ORANGE_300
+            page.update()
             return
         f = e.files[0]
+        info = f"name={f.name} path={f.path} size={f.size}"
         try:
-            if f.bytes is not None:
+            content = None
+            if getattr(f, "bytes", None):
                 content = f.bytes.decode("utf-8", errors="ignore")
+                info += " [via bytes]"
             else:
                 with open(f.path, "r", encoding="utf-8", errors="ignore") as fp:
                     content = fp.read()
+                info += " [via path]"
             config_input.value = content
-            config_status.value = f"Загружен: {f.name} ({len(content)} байт)"
+            config_status.value = f"OK: {info} ({len(content)} символов)"
             config_status.color = ft.Colors.GREEN_300
             parse_config()
         except Exception as ex:
-            config_status.value = f"Ошибка: {ex}"
+            config_status.value = f"FAIL: {info} | err={ex}"
             config_status.color = ft.Colors.RED_300
         page.update()
 
@@ -116,6 +136,7 @@ def main(page: ft.Page):
         [
             ft.Row(
                 [
+                    ft.ElevatedButton("🔐 Разрешение", on_click=request_storage),
                     ft.ElevatedButton("📂 Загрузить .rsc", on_click=pick_file),
                     ft.OutlinedButton("🗑 Очистить", on_click=clear_config),
                     ft.ElevatedButton("🔍 Разобрать", on_click=lambda e: parse_config()),
@@ -130,7 +151,7 @@ def main(page: ft.Page):
         scroll=ft.ScrollMode.AUTO,
     )
 
-    # ----- ПАРАМЕТРЫ -----
+    # --- ПАРАМЕТРЫ ---
     src_dd = ft.Dropdown(label="Источник (src IP)", options=[], width=400)
     dst_dd = ft.Dropdown(label="Назначение (домен/IP)", options=[], width=400)
     manual_switch = ft.Switch(label="Ручной ввод цели", value=False)
@@ -170,7 +191,7 @@ def main(page: ft.Page):
         scroll=ft.ScrollMode.AUTO,
     )
 
-    # ----- ПРАВИЛА -----
+    # --- ПРАВИЛА ---
     rules_list = ft.ListView(expand=True, spacing=2)
 
     rules_content = ft.Column(
@@ -230,7 +251,7 @@ def main(page: ft.Page):
                 f"dst={r['dst']} via {r['gateway']} table={r['table']}", r.get("disabled", False)))
         page.update()
 
-    # ----- РЕЗУЛЬТАТ -----
+    # --- РЕЗУЛЬТАТ ---
     graph_canvas = ft.Container(
         content=ft.Text("Граф появится после симуляции", size=13, color=ft.Colors.GREY_500),
         bgcolor=ft.Colors.BLACK, border_radius=8, padding=8, height=220,
@@ -365,7 +386,6 @@ def main(page: ft.Page):
             log_output.value = "\n".join(lines)
             summary.value = sim.summary[0]
 
-            # рисуем граф текстом (без canvas — обход бага)
             if sim.route_path:
                 graph_lines = []
                 for kind, label in sim.route_path:
@@ -384,7 +404,6 @@ def main(page: ft.Page):
             switch_tab(TAB_RESULT)
         page.update()
 
-    # ============ НАВИГАЦИЯ КНОПКАМИ ============
     content_area = ft.Container(expand=True)
 
     def switch_tab(idx: int):
@@ -397,7 +416,6 @@ def main(page: ft.Page):
             content_area.content = rules_content
         elif idx == TAB_RESULT:
             content_area.content = result_content
-        # обновляем подсветку кнопок
         for i, btn in enumerate(nav_buttons):
             btn.style = ft.ButtonStyle(
                 bgcolor=ft.Colors.BLUE_700 if i == idx else ft.Colors.BLUE_GREY_800,
@@ -406,7 +424,7 @@ def main(page: ft.Page):
         page.update()
 
     def make_nav_button(text: str, idx: int):
-        btn = ft.ElevatedButton(
+        return ft.ElevatedButton(
             text=text,
             on_click=lambda e, i=idx: switch_tab(i),
             style=ft.ButtonStyle(
@@ -416,7 +434,6 @@ def main(page: ft.Page):
             ),
             expand=True,
         )
-        return btn
 
     nav_buttons = [
         make_nav_button("Конфиг", TAB_CONFIG),
@@ -427,7 +444,6 @@ def main(page: ft.Page):
 
     nav_bar = ft.Row(nav_buttons, spacing=4)
 
-    # Инициализация
     switch_tab(TAB_CONFIG)
 
     page.add(
@@ -441,12 +457,4 @@ def main(page: ft.Page):
     )
 
 
-if __name__ == "__main__":
-    import traceback
-    try:
-        ft.app(main)
-    except Exception:
-        with open("/sdcard/routeros_sim_crash.txt", "w", encoding="utf-8") as f:
-            f.write(traceback.format_exc())
-        raise
-
+ft.app(main)
