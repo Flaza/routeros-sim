@@ -22,12 +22,22 @@ jobs:
       - name: Install Flet
         run: pip install "flet[all]==0.28.3"
 
+      - name: Read version from pyproject.toml
+        run: |
+          VER=$(grep '^version = ' pyproject.toml | sed 's/version = "//; s/"//')
+          echo "APP_VERSION=$VER" >> $GITHUB_ENV
+          echo "Version: $VER"
+
       - name: Build APK (arm64-v8a)
-        run: flet build apk --arch arm64-v8a
+        run: |
+          flet build apk --arch arm64-v8a \
+            --include-packages flet_permission_handler,flet_core \
+            --permissions android.permission.READ_EXTERNAL_STORAGE,android.permission.WRITE_EXTERNAL_STORAGE,android.permission.MANAGE_EXTERNAL_STORAGE \
+            -vv
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: routeros-sim-apk
+          name: routeros-sim-${{ github.ref_name }}-${{ env.APP_VERSION }}
           path: build/apk/*.apk
           if-no-files-found: error
