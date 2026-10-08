@@ -49,6 +49,8 @@ def main(page: ft.Page):
         multiline=True,
         text_style=ft.TextStyle(font_family="monospace", size=11),
         expand=True,
+        max_length=100000,
+        keyboard_type=ft.KeyboardType.TEXT,
     )
 
     config_status = ft.Text(value="Конфиг не загружен", color=ft.Colors.ORANGE_300)
