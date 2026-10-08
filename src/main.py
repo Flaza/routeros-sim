@@ -441,4 +441,12 @@ def main(page: ft.Page):
     )
 
 
-ft.app(main)
+if __name__ == "__main__":
+    import traceback
+    try:
+        ft.app(main)
+    except Exception:
+        with open("/sdcard/routeros_sim_crash.txt", "w", encoding="utf-8") as f:
+            f.write(traceback.format_exc())
+        raise
+
